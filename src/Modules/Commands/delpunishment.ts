@@ -12,7 +12,6 @@ export const command = {
     onRunError: UnexpectedError,
     run: async (ctx: Context, args: ParsedArgs): Promise<void> => {
         const commandArgs = (Object.values(args)[0] as string).split(" ");
-        // TODO: If ban/mute notify that they still are banned/muted
         if(commandArgs.length == 0) {
             ctx.reply(ErrorEmbed("You didn't give any punishments to delete."));
         } else {

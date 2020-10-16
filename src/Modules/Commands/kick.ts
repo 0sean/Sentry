@@ -21,7 +21,6 @@ export const command = {
             ctx.reply(ErrorEmbed("No mention/ID was given."));
         } else {
             if(commandArgs[0].startsWith("<@!")) {
-                // TODO: Check user lvl is not same/lower
                 const user = ctx.message.mentions.first();
                 (await user?.createOrGetDm())?.createMessage(SuccessEmbed(`🔨 You were kicked in ${ctx.guild?.name} for \`${reason}\`.`));
                 ctx.guild?.removeMember(user?.id as string, {
