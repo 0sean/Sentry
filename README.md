@@ -30,7 +30,7 @@ For information on how to set up Sentry with your server and more, go to [the do
 ## Reporting issues
 Please report any issues with any instance of the bot (as long as it is concerning an official bug/feature of Sentry and not a modification made by another instance owner) to the [GitHub issues page](https://github.com/Anidox/Sentry/issues). You can track progress with the tracker link in the [Notion page](https://www.notion.so/Sentry-9b1df2c92d8448a3934ec3de74217061)
 
-## Development
+## Development and contribution
 Feel free to contribute to Sentry, or even just add features to your own instance. Simply fork and make a pull request. Add `WIP` add the start of the title of your pull request if it is a work in progress and should not be merged.
 
 When contributing to Sentry, please follow the code style used throughout. The ESLint config is provided. When developing, you can use `npm run dev`, which adds ESLint checking on run. Please make sure you have no ESLint warnings/errors before pushing. You may bypass warnings where absolutely neccesary (e.g. when there is no other possible/viable way).
