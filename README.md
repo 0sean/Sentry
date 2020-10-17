@@ -24,6 +24,9 @@ As Sentry is open-source, you can always run it yourself. Simply:
   
 Now you can run your bot with `npm start`! 🎉
 
+## Documentation
+For information on how to set up Sentry with your server and more, go to [the documentation page in Notion](https://www.notion.so/Documentation-cc1267da93414b9e878af9c4c1edc407)
+
 ## Reporting issues
 Please report any issues with any instance of the bot (as long as it is concerning an official bug/feature of Sentry and not a modification made by another instance owner) to the [GitHub issues page](https://github.com/Anidox/Sentry/issues). You can track progress with the tracker link in the [Notion page](https://www.notion.so/Sentry-9b1df2c92d8448a3934ec3de74217061)
 
