@@ -1,6 +1,6 @@
 import { SuccessEmbed, ErrorEmbed } from "../Embeds";
 import { CommandBase } from "../CommandBase";
-import { PS_GuildMod } from "../Permissions";
+import { identifyMember, PS_GuildMod } from "../Permissions";
 import { Member } from "detritus-client/lib/structures";
 import random from "crypto-random-string";
 const base = new CommandBase();
@@ -29,6 +29,10 @@ base.run = async (ctx, args, parsedArgs) => {
         ctx.reply(ErrorEmbed("No valid member was given."));
     } else if(typeof args.member == "string") {
         const id = random({length: 7});
+        if(ctx.guild?.fetchMember(args.member)) {
+            const member = await ctx.guild?.fetchMember(args.member), memberLevel = identifyMember(ctx)?.level || 0, mentionLevel = identifyMember(ctx, member)?.level || 0;
+            if(mentionLevel >= memberLevel) return ctx.reply(ErrorEmbed("You cannot ban this person as they have an equivalent or higher permission level to you."));
+        }
         ctx.guild?.createBan(args.member, {
             reason: `Punished by: ${ctx.member?.username}#${ctx.member?.discriminator} | Reason: ${args.reason as string || "No reason given"} | Punishment ID: ${id}`,
             deleteMessageDays: parsedArgs.purge
@@ -44,7 +48,9 @@ base.run = async (ctx, args, parsedArgs) => {
         });
         ctx.reply(SuccessEmbed(`✅ Banned ID ${args.member}`, `Punishment ID \`${id}\``));
     } else {
-        const member = args.member as Member, id = random({length: 7});
+        const member = args.member as Member, id = random({length: 7}),
+            memberLevel = identifyMember(ctx)?.level || 0, mentionLevel = identifyMember(ctx, member)?.level || 0;
+        if(mentionLevel >= memberLevel) return ctx.reply(ErrorEmbed("You cannot kick this person as they have an equivalent or higher permission level to you."));
         await member.createMessage(SuccessEmbed(`🔨 You were banned in ${ctx.guild?.name} for \`${args.reason || "No reason given"}\`.`));
         member.ban({
             reason: args.reason as string || "No reason given",

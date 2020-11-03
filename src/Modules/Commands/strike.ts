@@ -1,6 +1,6 @@
 import { ErrorEmbed, SuccessEmbed } from "../Embeds";
 import { CommandBase } from "../CommandBase";
-import { PS_GuildMod } from "../Permissions";
+import { identifyMember, PS_GuildMod } from "../Permissions";
 import { Member } from "detritus-client/lib/structures";
 import random from "crypto-random-string";
 const base = new CommandBase();
@@ -16,7 +16,9 @@ base.contentArgs = [
 
 base.run = (ctx, args) => {
     if(!args.member || typeof args.member == "string") return ctx.reply(ErrorEmbed("No valid member mention was given."));
-    const member = args.member as Member, id = random({length: 7});
+    const member = args.member as Member, id = random({length: 7}),
+        memberLevel = identifyMember(ctx)?.level || 0, mentionLevel = identifyMember(ctx, member)?.level || 0;
+    if(mentionLevel >= memberLevel) return ctx.reply(ErrorEmbed("You cannot kick this person as they have an equivalent or higher permission level to you."));
     ctx.commandClient.db.collection("punishments").insertOne({
         punishId: id,
         guildId: ctx.guildId,
