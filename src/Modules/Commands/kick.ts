@@ -21,7 +21,7 @@ base.run = async (ctx, args) => {
         const member = args.member as Member, id = random({length: 7});
         await member.createMessage(SuccessEmbed(`🔨 You were kicked in ${ctx.guild?.name} for \`${args.reason || "No reason given"}\`.`));
         member.remove({
-            reason: args.reason as string || "No reason given"
+            reason: `Punished by: ${ctx.member?.username}#${ctx.member?.discriminator} | Reason: ${args.reason as string || "No reason given"} | Punishment ID: ${id}`
         });
         ctx.commandClient.db.collection("punishments").insertOne({
             punishId: id,

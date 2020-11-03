@@ -6,7 +6,7 @@ import random from "crypto-random-string";
 const base = new CommandBase();
 
 base.name = "ban";
-base.description = "Bans users in the server.";
+base.description = "Bans users from the server.";
 base.permissions = PS_GuildMod;
 
 base.contentArgs = [
@@ -30,7 +30,7 @@ base.run = async (ctx, args, parsedArgs) => {
     } else if(typeof args.member == "string") {
         const id = random({length: 7});
         ctx.guild?.createBan(args.member, {
-            reason: args.reason as string || "No reason given",
+            reason: `Punished by: ${ctx.member?.username}#${ctx.member?.discriminator} | Reason: ${args.reason as string || "No reason given"} | Punishment ID: ${id}`,
             deleteMessageDays: parsedArgs.purge
         });
         ctx.commandClient.db.collection("punishments").insertOne({
