@@ -1,4 +1,4 @@
-import { Context } from "./Client";
+import { Context } from "detritus-client/lib/command";
 import { Message } from "detritus-client/lib/structures";
 import { GatewayClientEvents } from "detritus-client/lib/gateway/clientevents";
 import { SuccessEmbed, InProgressEmbed } from "./Embeds";

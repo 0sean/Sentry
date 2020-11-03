@@ -1,69 +1,66 @@
-import { Context } from "../Client";
-import { ErrorEmbed, SuccessEmbed } from "../Embeds";
-import { UnexpectedError } from "../UnexpectedError";
+import { SuccessEmbed, ErrorEmbed } from "../Embeds";
+import { CommandBase } from "../CommandBase";
 import { PS_GuildMod } from "../Permissions";
+import { Member } from "detritus-client/lib/structures";
 import random from "crypto-random-string";
-import { ParsedArgs } from "detritus-client/lib/command";
+const base = new CommandBase();
 
-export const command = {
-    name: "ban",
+base.name = "ban";
+base.description = "Bans users in the server.";
+base.permissions = PS_GuildMod;
+
+base.contentArgs = [
+    {name: "member", type: "member"},
+    {name: "reason", type: "string"}
+];
+base.args = [{
+    name: "purge",
+    aliases: ["p"],
     metadata: {
-        description: "Bans users in the server.",
-        permissions: PS_GuildMod
+        description: "How long to purge messages for from that user in days."
     },
-    args: [{
-        name: "purge",
-        aliases: ["p"],
-        metadata: {
-            description: "How long to purge messages for from that user."
-        },
-        default: 0,
-        type: Number
-    }],
-    onBefore: PS_GuildMod.identify,
-    onRunError: UnexpectedError,
-    run: async (ctx: Context, args: ParsedArgs): Promise<void> => {
-        const commandArgs = args.ban.split(" "), reason = commandArgs.slice(1).join(" "), id = random({length: 7});
-        if(!commandArgs) {
-            ctx.reply(ErrorEmbed("No mention/ID was given."));
-        } else {
-            if(commandArgs[0].startsWith("<@!")) {
-                const user = ctx.message.mentions.first();
-                (await user?.createOrGetDm())?.createMessage(SuccessEmbed(`🔨 You were banned in ${ctx.guild?.name} for \`${reason}\`.`));
-                ctx.guild?.createBan(user?.id as string, {
-                    reason: `Banned by ${ctx.member?.username}#${ctx.member?.discriminator} for "${reason || "No reason"}". Punishment ID ${id}`,
-                    deleteMessageDays: args.purge
-                });
-                ctx.commandClient.db.collection("punishments").insertOne({
-                    punishId: id,
-                    guildId: ctx.guildId,
-                    reason,
-                    type: "ban",
-                    automated: false,
-                    subjectId: user?.id,
-                    actorId: ctx.member?.id
-                });
-                ctx.reply(SuccessEmbed(`✅ Banned ${user?.username}`));
-            } else if(!isNaN(commandArgs[0])) {
-                ctx.guild?.createBan(commandArgs[0], {
-                    reason: `Banned by ${ctx.member?.username}#${ctx.member?.discriminator} for "${reason || "No reason"}". Punishment ID ${id}`,
-                    deleteMessageDays: args.purge
-                });
-                ctx.commandClient.db.collection("punishments").insertOne({
-                    punishId: id,
-                    guildId: ctx.guildId,
-                    reason,
-                    type: "ban",
-                    automated: false,
-                    subjectId: commandArgs[0],
-                    actorId: ctx.member?.id
-                });
-                ctx.reply(SuccessEmbed(`✅ Banned ID ${commandArgs[0]}`));
-            } else {
-                ctx.reply(ErrorEmbed("No mention/ID was given."));
-            }
-        }
+    default: "0",
+    type: String
+}];
+
+base.run = async (ctx, args, parsedArgs) => {
+    parsedArgs.purge = parsedArgs.purge.split(" ")[0];
+    if(!args.member || (typeof args.member == "string" && isNaN(parseInt(args.member)))) {
+        ctx.reply(ErrorEmbed("No valid member was given."));
+    } else if(typeof args.member == "string") {
+        const id = random({length: 7});
+        ctx.guild?.createBan(args.member, {
+            reason: args.reason as string || "No reason given",
+            deleteMessageDays: parsedArgs.purge
+        });
+        ctx.commandClient.db.collection("punishments").insertOne({
+            punishId: id,
+            guildId: ctx.guildId,
+            reason: args.reason || "No reason given.",
+            type: "ban",
+            automated: false,
+            subjectId: args.member,
+            actorId: ctx.member?.id
+        });
+        ctx.reply(SuccessEmbed(`✅ Banned ID ${args.member}`, `Punishment ID \`${id}\``));
+    } else {
+        const member = args.member as Member, id = random({length: 7});
+        await member.createMessage(SuccessEmbed(`🔨 You were banned in ${ctx.guild?.name} for \`${args.reason || "No reason given"}\`.`));
+        member.ban({
+            reason: args.reason as string || "No reason given",
+            deleteMessageDays: parsedArgs.purge
+        });
+        ctx.commandClient.db.collection("punishments").insertOne({
+            punishId: id,
+            guildId: ctx.guildId,
+            reason: args.reason || "No reason given.",
+            type: "ban",
+            automated: false,
+            subjectId: member.id,
+            actorId: ctx.member?.id
+        });
+        ctx.reply(SuccessEmbed(`✅ Banned ${member.username}`, `Punishment ID \`${id}\``));
     }
 };
 
-export default command;
+export default base.command;

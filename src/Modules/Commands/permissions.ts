@@ -1,18 +1,14 @@
-import { Context } from "../Client";
 import { SuccessEmbed } from "../Embeds";
-import { UnexpectedError } from "../UnexpectedError";
+import { CommandBase } from "../CommandBase";
 import { identifyMember } from "../Permissions";
+const base = new CommandBase();
 
-export const command = {
-    name: "permissions",
-    metadata: {
-        description: "Shows your permission level."
-    },
-    onRunError: UnexpectedError,
-    run: (ctx: Context): void => {
-        const pset = identifyMember(ctx);
-        ctx.reply(SuccessEmbed(`Your permission level is ${pset?.prettyName.toLowerCase()}.`, `Also known as level ${pset?.level.toString()}.`));
-    }
+base.name = "permissions";
+base.description = "Shows your permission level in this server.";
+
+base.run = (ctx) => {
+    const pset = identifyMember(ctx);
+    ctx.reply(SuccessEmbed(`Your permission level is ${pset ? pset.prettyName.toLowerCase() : "member"}.`, `Also known as level ${pset ? pset.level.toString() : 0}.`));
 };
 
-export default command;
+export default base.command;

@@ -1,8 +1,9 @@
-import { Context } from "./Client";
+import { Context } from "detritus-client/lib/command";
 export interface PermissionSet {
-    prettyName: string,
-    level: number,
+    prettyName: string
+    level: number
     identify(ctx: Context): boolean
+    identifyAsync?(ctx: Context): Promise<boolean>
 }
 
 export const PS_BotOwner: PermissionSet = {
@@ -23,25 +24,19 @@ export const PS_GuildOwner: PermissionSet = {
     }
 };
 
-export const PS_GuildAdmin: PermissionSet = {
-    prettyName: "Guild admin",
-    level: 2,
-    identify(ctx: Context): boolean {
-        return false;
-    }
-};
-
 export const PS_GuildMod: PermissionSet = {
     prettyName: "Guild moderator",
     level: 1,
 
     identify(ctx: Context): boolean {
-        return true;
+        if(ctx.member?.isOwner) return true;
+        // db check
+        return false;
     }
 };
 
 // PermissionSets should be added to this array, or they will not work with identifyUser.
-const PermissionSets: Array<PermissionSet> = [PS_BotOwner, PS_GuildAdmin, PS_GuildMod, PS_GuildOwner];
+const PermissionSets: Array<PermissionSet> = [PS_BotOwner, PS_GuildMod, PS_GuildOwner];
 
 export function identifyMember(ctx: Context): PermissionSet | undefined {
     PermissionSets.sort((a, b) => {

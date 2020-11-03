@@ -1,21 +1,13 @@
-import { Context } from "../Client";
-import { InProgressEmbed, SuccessEmbed } from "../Embeds";
-import { UnexpectedError } from "../UnexpectedError";
+import { SuccessEmbed, InProgressEmbed } from "../Embeds";
+import { CommandBase } from "../CommandBase";
+const base = new CommandBase();
 
-export const command = {
-    name: "ping",
-    metadata: {
-        description: "Checks the bot's ping to Discord."
-    },
-    onRunError: UnexpectedError,
-    run: (ctx: Context): void => {
-        const now = Date.now();
-        ctx.reply(InProgressEmbed("🔄 Finding ping...", "If this message never changes, try again - it means the bot either errored or was ratelimited."))
-            .then((message) => {
-                const ping = Date.now() - now;
-                message.edit(SuccessEmbed(`🏓 Pong! Ping = ${ping}ms`));
-            });
-    }
+base.name = "ping";
+base.description = "Checks the bot's ping to Discord.";
+
+base.run = async (ctx) => {
+    const ping = await ctx.client.ping();
+    ctx.reply(SuccessEmbed(`🏓 Pong! Ping = ${ping.rest}ms`, `Gateway ping: ${ping.gateway}ms`));
 };
 
-export default command;
+export default base.command;

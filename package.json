@@ -41,7 +41,6 @@
     "read-pkg": "^5.2.0",
     "request-ip": "^2.1.3",
     "signale": "^1.4.0",
-    "typescript": "^4.0.3",
-    "zod": "^1.11.9"
+    "typescript": "^4.0.3"
   }
 }
