@@ -3,7 +3,6 @@ import { ClusterClient } from "detritus-client";
 import { PresenceStatuses, ActivityTypes } from "detritus-client/lib/constants";
 import { Client } from "./Client";
 import { WebServer } from "./WebServer";
-import { ClientEvents } from "detritus-client/lib/constants";
 import signale = require("signale");
 
 export class Bot {

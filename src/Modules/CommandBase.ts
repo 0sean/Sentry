@@ -72,7 +72,7 @@ export class CommandBase {
 
     set run(callback: (context: ClientContext, contentArgs: Record<string, string | Channel | Member | Role | undefined>, args: ParsedArgs) => void) {
         this.command.run = (context: Context, args) => {
-            const ctx = context as unknown as ClientContext;
+            const ctx = context as ClientContext;
             const contentArgs = this.parseContentArgs(args, ctx);
             try {
                 callback(ctx, contentArgs, args);

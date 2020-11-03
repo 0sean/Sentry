@@ -1,4 +1,4 @@
-import { SuccessEmbed, InProgressEmbed } from "../Embeds";
+import { SuccessEmbed } from "../Embeds";
 import { CommandBase } from "../CommandBase";
 const base = new CommandBase();
 
