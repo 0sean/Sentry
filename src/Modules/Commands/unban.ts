@@ -1,7 +1,6 @@
 import { SuccessEmbed, ErrorEmbed } from "../Embeds";
 import { CommandBase } from "../CommandBase";
 import { PS_GuildMod } from "../Permissions";
-import { Member } from "detritus-client/lib/structures";
 const base = new CommandBase();
 
 base.name = "unban";

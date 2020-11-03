@@ -3,7 +3,7 @@ import { Message, Reaction } from "detritus-client/lib/structures";
 import { Context } from "detritus-client/lib/command";
 
 export async function AwaitMessage(ctx: Context, filter: (m?: Message) => boolean, timeout?: number): Promise<{promise: Promise<Message>, cancel: () => void}> {
-    let rejectOuter: (reason: unknown) => void;
+    let rejectOuter: (reason?: string) => void;
     const promise = new Promise((resolve, reject) => {
         rejectOuter = reject;
         if(timeout) {
@@ -28,7 +28,7 @@ export async function AwaitMessage(ctx: Context, filter: (m?: Message) => boolea
 }
 
 export async function AwaitReaction(ctx: Context, filter: (e?: GatewayClientEvents.MessageReactionAdd) => boolean, timeout?: number): Promise<{promise: Promise<Reaction>, cancel: () => void}> {
-    let rejectOuter: (reason: unknown) => void;
+    let rejectOuter: (reason?: string) => void;
     const promise = new Promise((resolve, reject) => {
         rejectOuter = reject;
         if(timeout) {
