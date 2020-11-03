@@ -1,9 +1,9 @@
 import { Context } from "detritus-client/lib/command";
+import { Context as ClientContext } from "./Client";
 export interface PermissionSet {
     prettyName: string
     level: number
-    identify(ctx: Context): boolean
-    identifyAsync?(ctx: Context): Promise<boolean>
+    identify(ctx: Context): Promise<boolean> | boolean
 }
 
 export const PS_BotOwner: PermissionSet = {
@@ -28,10 +28,14 @@ export const PS_GuildMod: PermissionSet = {
     prettyName: "Guild moderator",
     level: 1,
 
-    identify(ctx: Context): boolean {
+    async identify(ctx: Context): Promise<boolean> {
         if(ctx.member?.isOwner) return true;
-        // db check
-        return false;
+        const document = await (ctx as ClientContext).commandClient.db.collection("guildSettings").findOne({
+            guildId: ctx.guildId
+        });
+        if(!document) return false;
+        if(!ctx.member?.roles.find(r => r?.id == document.modRole)) return false;
+        return true;
     }
 };
 
