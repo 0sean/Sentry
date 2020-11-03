@@ -1,27 +1,26 @@
-import { ParsedArgs } from "detritus-client/lib/command";
-import { Context } from "../Client";
 import { SuccessEmbed, ErrorEmbed } from "../Embeds";
-import { UnexpectedError } from "../UnexpectedError";
+import { CommandBase } from "../CommandBase";
+const base = new CommandBase();
 
-export const command = {
-    name: "punishment",
-    metadata: {
-        description: "Shows information about a punishment."
-    },
-    onRunError: UnexpectedError,
-    run: async (ctx: Context, args: ParsedArgs): Promise<void> => {
-        const document = await ctx.commandClient.db.collection("punishments").findOne({
-            guildId: ctx.guildId,
-            punishId: args.punishment
-        });
-        if(!document) {
-            ctx.reply(ErrorEmbed("Punishment with that ID not found"));
-        } else {
-            const actor = ctx.guild?.members.find(m => m.id == document.actorId),
-                subject = ctx.guild?.members.find(m => m.id == document.subjectId);
-            ctx.reply(SuccessEmbed(`Subject: ${subject?.name}#${subject?.discriminator} | Reason: \`${document.reason}\``, `${document.automated ? "Automated punishment" : `Punished by ${actor?.name}#${actor?.discriminator}`}\nType: ${document.type}`));
-        }
-    }
+base.name = "punishment";
+base.description = "Shows punishment details.";
+
+base.contentArgs = [
+    {name: "id", type: "string"}
+];
+
+base.run = async (ctx, args) => {
+    if(!args.id) return ctx.reply(ErrorEmbed("Punishment ID required."));
+    const document = await ctx.commandClient.db.collection("punishments").findOne({
+        guildId: ctx.guildId,
+        punishId: args.id
+    });
+    if(!document) return ctx.reply(ErrorEmbed("No punishment found with that ID."));
+    const actor = ctx.guild?.members.find(m => m.id == document.actorId),
+        subject = ctx.guild?.members.find(m => m.id == document.subjectId),
+        a = actor ? `\`${actor.username}#${actor.discriminator}\`` : `ID \`${document.actorId}\``,
+        s = subject ? `\`${subject.username}#${subject.discriminator}\`` : `ID \`${document.subjectId}\``;
+    ctx.reply(SuccessEmbed(`🔨 ID ${args.id}`, `Type: \`${document.type}\``, [{name: "Subject:", value: s}, {name: "Punished by:", value: document.automated ? `${ctx.me?.username} (automated punishment)` : a}, {name: "Reason:", value: `\`${document.reason}\``}]));
 };
 
-export default command;
+export default base.command;

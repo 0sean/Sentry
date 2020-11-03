@@ -1,42 +1,35 @@
-import { Context } from "../Client";
 import { ErrorEmbed, SuccessEmbed } from "../Embeds";
-import { UnexpectedError } from "../UnexpectedError";
-import { PS_GuildMod } from "../Permissions";
+import { CommandBase } from "../CommandBase";
+import { identifyMember, PS_GuildMod } from "../Permissions";
+import { Member } from "detritus-client/lib/structures";
 import random from "crypto-random-string";
-import { ParsedArgs } from "detritus-client/lib/command";
+const base = new CommandBase();
 
-export const command = {
-    name: "strike",
-    metadata: {
-        description: "Strikes users in the server.",
-        permissions: PS_GuildMod
-    },
-    onBefore: PS_GuildMod.identify,
-    onRunError: UnexpectedError,
-    run: async (ctx: Context, args: ParsedArgs): Promise<void> => {
-        console.log(args);
-        const commandArgs = args.strike.split(" "), reason = commandArgs.slice(1).join(" "), id = random({length: 7});
-        if(!commandArgs[0]) {
-            ctx.reply(ErrorEmbed("No mention/ID was given."));
-        } else {
-            if(ctx.message.mentions.first()) {
-                const user = ctx.message.mentions.first();
-                ctx.commandClient.db.collection("punishments").insertOne({
-                    punishId: id,
-                    guildId: ctx.guildId,
-                    reason,
-                    type: "strike",
-                    automated: false,
-                    subjectId: user?.id,
-                    actorId: ctx.member?.id
-                });
-                (await user?.createOrGetDm())?.createMessage(SuccessEmbed(`🔨 You were striked in ${ctx.guild?.name} for \`${reason}\`.`));
-                ctx.reply(SuccessEmbed(`✅ Striked ${user?.username}`, `Punishment ID \`${id}\``));
-            } else {
-                ctx.reply(ErrorEmbed("No valid mention was given."));
-            }
-        }
-    }
+base.name = "strike";
+base.description = "Strikes a member.";
+base.permissions = PS_GuildMod;
+
+base.contentArgs = [
+    {name: "member", type: "member"},
+    {name: "reason", type: "string"}
+];
+
+base.run = (ctx, args) => {
+    if(!args.member || typeof args.member == "string") return ctx.reply(ErrorEmbed("No valid member mention was given."));
+    const member = args.member as Member, id = random({length: 7}),
+        memberLevel = identifyMember(ctx)?.level || 0, mentionLevel = identifyMember(ctx, member)?.level || 0;
+    if(mentionLevel >= memberLevel) return ctx.reply(ErrorEmbed("You cannot kick this person as they have an equivalent or higher permission level to you."));
+    ctx.commandClient.db.collection("punishments").insertOne({
+        punishId: id,
+        guildId: ctx.guildId,
+        reason: args.reason || "No reason given.",
+        type: "strike",
+        automated: false,
+        subjectId: member.id,
+        actorId: ctx.member?.id
+    });
+    member.createMessage(SuccessEmbed(`🔨 You were striked in ${ctx.guild?.name} for \`${args.reason}\`.`));
+    ctx.reply(SuccessEmbed(`✅ Striked ${member.username}`, `Punishment ID \`${id}\``));
 };
 
-export default command;
+export default base.command;

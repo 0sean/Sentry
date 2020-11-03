@@ -1,6 +1,6 @@
 import { GatewayClientEvents } from "detritus-client";
 import { Message, Reaction } from "detritus-client/lib/structures";
-import { Context } from "./Client";
+import { Context } from "detritus-client/lib/command";
 
 export async function AwaitMessage(ctx: Context, filter: (m?: Message) => boolean, timeout?: number): Promise<{promise: Promise<Message>, cancel: () => void}> {
     let rejectOuter: (reason: unknown) => void;
