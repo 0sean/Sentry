@@ -4,6 +4,9 @@ import { Client } from "./Client";
 import ip from "request-ip";
 import got from "got";
 import path from "path";
+import { ErrorEmbed, SuccessEmbed } from "./Embeds";
+import { Guild } from "detritus-client/lib/structures";
+import { ClusterClient } from "detritus-client";
 
 // TODO: Add more detail to these
 interface VPNResponse {
@@ -30,6 +33,10 @@ export class WebServer {
         this.app.set("views", path.join(__dirname, "../Web/Views"));
 
         this.app.get("/:verifyId", async (req, res) => {
+            let guilds: Guild[] = [];
+            (client.client as ClusterClient).shards.forEach(shard => {
+                guilds = guilds.concat(shard.guilds.toArray());
+            });
             const document = await client.db.collection("verification").findOne({
                 verifyId: req.params.verifyId
             });
@@ -39,13 +46,19 @@ export class WebServer {
                 res.render("Pages/Captcha", {sitekey: process.env.HCAPTCHA_SITEKEY});
             } else {
                 res.render("Pages/Failure");
-                client.db.collection("verification").deleteOne({
-                    verifyId: req.params.verifyId
-                });
+                const document = await client.db.collection("verification").findOneAndDelete({
+                        verifyId: req.params.verifyId
+                    }), member = guilds.find(g => g.id == document.value.guildId)?.members.find(m => m.id == document.value.memberId);
+                (await member?.createOrGetDm())?.createMessage(ErrorEmbed("You failed verification and were kicked from the server."));
+                member?.remove({reason: "Sentry Verify: Member failed verification"});
             }
         });
 
         this.app.post("/:verifyId", async (req, res) => {
+            let guilds: Guild[] = [];
+            (client.client as ClusterClient).shards.forEach(shard => {
+                guilds = guilds.concat(shard.guilds.toArray());
+            });
             const h: HCaptchaResponse = await got.post("https://hcaptcha.com/siteverify", {
                 form: {
                     secret: process.env.HCAPTCHA_SECRET,
@@ -55,15 +68,23 @@ export class WebServer {
                 }
             }).json();
             if(h.success) {
-                res.render("Pages/Success");
-                client.db.collection("verification").deleteOne({
-                    verifyId: req.params.verifyId
-                });
+                const document = await client.db.collection("verification").findOneAndDelete({
+                        verifyId: req.params.verifyId
+                    }), guild = guilds.find(g => g.id == document.value.guildId)
+                    , member = guild?.members.find(m => m.id == document.value.memberId)
+                    , guildDoc = await client.db.collection("guildSettings").findOne({
+                        guildId: document.value.guildId
+                    });
+                res.render("Pages/Success", {guildName: guild?.name});
+                (await member?.createOrGetDm())?.createMessage(SuccessEmbed(`✅ You passed verification. You can now chat in ${guild?.name}`));
+                member?.addRole(guildDoc.verify, {reason: "Sentry Verify: Member passed verification"});
             } else {
                 res.render("Pages/Failure");
-                client.db.collection("verification").deleteOne({
-                    verifyId: req.params.verifyId
-                });
+                const document = await client.db.collection("verification").findOneAndDelete({
+                        verifyId: req.params.verifyId
+                    }), member = guilds.find(g => g.id == document.value.guildId)?.members.find(m => m.id == document.value.memberId);
+                (await member?.createOrGetDm())?.createMessage(ErrorEmbed("You failed verification and were kicked from the server."));
+                member?.remove({reason: "Sentry Verify: Member failed verification"});
             }
         });
 
