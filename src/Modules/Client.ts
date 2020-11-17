@@ -2,16 +2,11 @@
 import { CommandClient, CommandClientOptions } from "detritus-client/lib/commandclient";
 import { MongoClient, Db } from "mongodb";
 import signale from "signale";
-import { ShardClient } from "detritus-client";
-import { Events } from "./Events";
+import { GatewayClientEvents, ShardClient } from "detritus-client";
 import { Context as DetritusContext } from "detritus-client/lib/command";
+import { Events } from "./Events";
 
 // TODO: Events incl log events and new server events for db
-
-export interface Event {
-    name: string,
-    trigger(data: unknown): void | Promise<void>
-}
 
 export class Client extends CommandClient {
     mongo!: MongoClient;
@@ -32,8 +27,10 @@ export class Client extends CommandClient {
     constructor(token: ShardClient | string, options: CommandClientOptions) {
         super(token, options);
         this.startDatabase();
-        Events.forEach((event: Event) => {
-            this.client.addListener(event.name, event.trigger);
+        Events.forEach(event => {
+            this.client.addListener(event.name, (data: GatewayClientEvents.GuildMemberAdd) => {
+                event.trigger(data, this);
+            });
         });
     }
 }
