@@ -20,7 +20,8 @@ As Sentry is open-source, you can always run it yourself. Simply:
 
   1. `git clone` the repo
   2. Run `npm install`
-  3. Configure your Sentry instance by making a .env file - there is a template in [.env.example](.env.example).
+  3. Configure your Sentry instance by making a .env file - there is a template in [.env.example](.env.example)
+  4. Create the collections `guildSettings`, `verification` and `punishments` in your MongoDB database
   
 Now you can run your bot with `npm start`! 🎉
 
