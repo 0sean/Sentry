@@ -10,183 +10,131 @@ base.description = "Configure Sentry for your server.";
 base.permissions = PS_GuildOwner;
 base.aliases = ["setup"];
 
+interface Setting {
+    emoji: string,
+    name: string,
+    description: string,
+    type: "role" | "channel",
+    enable: string,
+    field: string
+}
+
+type AwaitedPromise<T> = T extends Promise<infer U> ? U : T
+
 base.run = async (ctx) => {
-    const message = await ctx.reply(SuccessEmbed("⚙️ Configure Sentry", undefined, [{name: "🛡️ Verify", value: "Configure Sentry's bot and VPN detection."}, {name: "👮 Moderator role", value: "Choose who gets moderator permissions in Sentry."}, {name: "👋 Join/leave messages", value: "Choose where join/leave messages are sent to."}], "Click the buttons below to select a setting."));
-    await message.react("🛡️");
-    await message.react("👮");
-    await message.react("👋");
+    const settings: Setting[] = [{
+        emoji: "🛡️",
+        name: "Verify",
+        description: "Configure Sentry's bot and VPN detection.",
+        type: "role",
+        enable: "type the name of the role you want assigned to new members when they verify.\n[Click me to see how your roles should be set up - this is important!](https://notion.so/)",
+        field: "verify"
+    }, {
+        emoji: "👮",
+        name: "Moderator permissions",
+        description: "Choose who gets moderator permissions on Sentry.",
+        type: "role",
+        enable: "type the name of the role you want to give moderator permissions.",
+        field: "modRole"
+    }, {
+        emoji: "👋",
+        name: "Join/leave messages",
+        description: "Choose if/where join/leave message get sent.",
+        type: "channel",
+        enable: "type the name (not the mention) of the channel you want join/leave messages sent to",
+        field: "joinLeaveMessages"
+    }],
+        message = await ctx.reply(SuccessEmbed("🔧 Configure Sentry", undefined, settings.map(s => { return {name: `${s.emoji} ${s.name}`, value: s.description}; }), "Click the buttons below to select a setting or click the ❌ button to close it."));
+    settings.forEach(async (s) => {
+        await message.react(s.emoji);
+    });
     await message.react("❌");
-    const ar = await AwaitReaction(ctx, e => { return e?.messageId == message.id && (e?.reaction.emoji.toString() == "🛡️" || e?.reaction.emoji.toString() == "👮" || e?.reaction.emoji.toString() == "👋" || e?.reaction.emoji.toString() == "❌"); }, 600000);
-    ar.promise.then(async (r) => {
-        message.deleteReactions();
-        const document = await ctx.commandClient.db.collection("guildSettings").findOne({
-            guildId: ctx.guildId
-        });
-        if(r.emoji.toString() == "🛡️") {
-            await message.react("❌");
-            let msg: Message;
-            if(!document.verify) {
-                msg = await message.edit(SuccessEmbed("🛡️ Verify", "Verify is currently **off**.\nTo enable it, type the name of the role you want assigned to new members when they verify.\n[Click me to see how your roles should be set up - this is important!](https://notion.so/)", undefined, "To exit without saving, click the ❌ button below."));
-            } else {
-                const role = ctx.guild?.roles.find(r => r.id == document.verify);
-                if(!role) {
-                    msg = await message.edit(SuccessEmbed("🛡️ Verify", "Verify is currently **off** as its role has been deleted.\nTo re-enable it, type the name of the role you want assigned to new members when they verify.\n[Click me to see how your roles should be set up - this is important!](https://notion.so/)", undefined, "To exit without saving, click the ❌ button below."));
-                } else {
-                    msg = await message.edit(SuccessEmbed("🛡️ Verify", `Verify is currently **on** with role \`${role.name}\`.\nTo change the role it gives, type the name of the role you want it changed to.\n[Click me to see how your roles should be set up - this is important!](https://notion.so/)\nTo disable it, type \`off\`.`, undefined, "To exit without saving, click the ❌ button below."));
-                }
-            }
-            const arc = await AwaitReaction(ctx, e => { return e?.messageId == msg.id && e.reaction.emoji.toString() == "❌"; }, 600000);
-            const am = await AwaitMessage(ctx, () => { return true; });
-            arc.promise.then(() => {
-                msg.edit(SuccessEmbed("Exited config.", "No changes were made."));
-                msg.deleteReactions();
-                am.cancel();
-            }).catch(e => {
-                if(e == "No reaction was given in time.") {
-                    msg.edit(SuccessEmbed("Config was closed due to inactivity.", "No changes were made."));
-                }
-                msg.deleteReactions();
-                am.cancel();
-            });
-            am.promise.then(m => {
-                m.delete();
-                if(m.content.trim() == "off") {
-                    ctx.commandClient.db.collection("guildSettings").updateOne({
-                        guildId: ctx.guildId
-                    }, {
-                        $set: {
-                            verify: ""
-                        }
-                    });
-                    msg.edit(SuccessEmbed("✅ Changes saved."));
-                } else {
-                    const role = ctx.guild?.roles.find(r => r.name == m.content.trim());
-                    if(!role) return m.edit(ErrorEmbed("No role found with that name."));
-                    ctx.commandClient.db.collection("guildSettings").updateOne({
-                        guildId: ctx.guildId
-                    }, {
-                        $set: {
-                            verify: role.id
-                        }
-                    });
-                    msg.edit(SuccessEmbed("✅ Changes saved."));
-                }
-            }).catch(() => {
-                return;
-            });
-        } else if(r.emoji.toString() == "👮") {
-            await message.react("❌");
-            let msg: Message;
-            if(!document.modRole) {
-                msg = await message.edit(SuccessEmbed("👮 Moderator role", "There is currently *no moderator role*.\nTo set one, type the name of the role you want it set to.", undefined, "To exit without saving, click the ❌ button below."));
-            } else {
-                const role = ctx.guild?.roles.find(r => r.id == document.modRole);
-                if(!role) {
-                    msg = await message.edit(SuccessEmbed("👮 Moderator role", "There is currently *no moderator role*, as the previous role was deleted.\nTo set one, type the name of the role you want it set to.", undefined, "To exit without saving, click the ❌ button below."));
-                } else {
-                    msg = await message.edit(SuccessEmbed("👮 Moderator role", `The moderator role is currently \`${role.name}\`.\nTo change it, type the name of the role you want it set to.\nTo disable it, type \`off\`.`, undefined, "To exit without saving, click the ❌ button below."));
-                }
-            }
-            const arc = await AwaitReaction(ctx, e => { return e?.messageId == msg.id && e.reaction.emoji.toString() == "❌"; }, 600000);
-            const am = await AwaitMessage(ctx, () => { return true; });
-            arc.promise.then(() => {
-                msg.edit(SuccessEmbed("Exited config.", "No changes were made."));
-                msg.deleteReactions();
-                am.cancel();
-            }).catch(e => {
-                if(e == "No reaction was given in time.") {
-                    msg.edit(SuccessEmbed("Config was closed due to inactivity.", "No changes were made."));
-                }
-                msg.deleteReactions();
-                am.cancel();
-            });
-            am.promise.then(m => {
-                m.delete();
-                if(m.content.trim() == "off") {
-                    ctx.commandClient.db.collection("guildSettings").updateOne({
-                        guildId: ctx.guildId
-                    }, {
-                        $set: {
-                            modRole: ""
-                        }
-                    });
-                    msg.edit(SuccessEmbed("✅ Changes saved."));
-                } else {
-                    const role = ctx.guild?.roles.find(r => r.name == m.content.trim());
-                    if(!role) return m.edit(ErrorEmbed("No role found with that name."));
-                    ctx.commandClient.db.collection("guildSettings").updateOne({
-                        guildId: ctx.guildId
-                    }, {
-                        $set: {
-                            modRole: role.id
-                        }
-                    });
-                    msg.edit(SuccessEmbed("✅ Changes saved."));
-                }
-            }).catch(() => {
-                return;
-            });
-        } else if(r.emoji.toString() == "👋") {
-            await message.react("❌");
-            let msg: Message;
-            if(!document.joinLeaveMessages) {
-                msg = await message.edit(SuccessEmbed("👋 Join/leave messages", "There is currently *no channel set*.\nTo set one, type the name of the channel you want join/leave messages sent to.", undefined, "To exit without saving, click the ❌ button below."));
-            } else {
-                const channel = ctx.guild?.channels.find(c => c.id == document.joinLeaveMessages);
-                if(!channel) {
-                    msg = await message.edit(SuccessEmbed("👋 Join/leave messages", "There is currently *no channel set*, as the previous one was deleted.\nTo set one, type the name of the channel you want join/leave messages sent to.", undefined, "To exit without saving, click the ❌ button below."));
-                } else {
-                    msg = await message.edit(SuccessEmbed("👋 Join/leave messages", `Join/leave messages are currently being sent to #${channel.name}.\nTo change it, type the name of the channel you want join/leave messages sent to. To disable them, type \`off\`.`, undefined, "To exit without saving, click the ❌ button below."));
-                }
-            }
-            const arc = await AwaitReaction(ctx, e => { return e?.messageId == msg.id && e.reaction.emoji.toString() == "❌"; }, 600000);
-            const am = await AwaitMessage(ctx, () => { return true; });
-            arc.promise.then(() => {
-                msg.edit(SuccessEmbed("Exited config.", "No changes were made."));
-                msg.deleteReactions();
-                am.cancel();
-            }).catch(e => {
-                if(e == "No reaction was given in time.") {
-                    msg.edit(SuccessEmbed("Config was closed due to inactivity.", "No changes were made."));
-                }
-                msg.deleteReactions();
-                am.cancel();
-            });
-            am.promise.then(m => {
-                m.delete();
-                if(m.content.trim() == "off") {
-                    ctx.commandClient.db.collection("guildSettings").updateOne({
-                        guildId: ctx.guildId
-                    }, {
-                        $set: {
-                            joinLeaveMessages: ""
-                        }
-                    });
-                    msg.edit(SuccessEmbed("✅ Changes saved."));
-                } else {
-                    const channel = ctx.guild?.channels.find(r => r.name == m.content.trim());
-                    if(channel?.name.startsWith("<#")) return m.edit(ErrorEmbed("Send the channel name, not the mention."));
-                    if(!channel) return m.edit(ErrorEmbed("No channel found with that name."));
-                    ctx.commandClient.db.collection("guildSettings").updateOne({
-                        guildId: ctx.guildId
-                    }, {
-                        $set: {
-                            joinLeaveMessages: channel.id
-                        }
-                    });
-                    msg.edit(SuccessEmbed("✅ Changes saved."));
-                }
-            }).catch(() => {
-                return;
-            });
-        } else if(r.emoji.toString() == "❌") {
-            message.edit(SuccessEmbed("Exited config.", "No changes were made."));
-        }
-    }).catch(e => {
-        if(e == "No reaction was given in time.") {
+    const arm = await AwaitReaction(ctx, e => e?.messageId == message.id && (settings.map(s => s.emoji).includes(e.reaction.emoji.toString()) || e.reaction.emoji.toString() == "❌"), 600000);
+    let arx: AwaitedPromise<ReturnType<typeof AwaitReaction>>, am: AwaitedPromise<ReturnType<typeof AwaitMessage>>;
+    arm.promise.then(async (r) => {
+        if(r.emoji.toString() == "❌") {
             message.deleteReactions();
+            return message.edit(SuccessEmbed("Exited config.", "No changes were made."));
+        }
+        const setting = settings.find(s => s.emoji == r.emoji.toString()) as Setting,
+            document = await ctx.commandClient.db.collection("guildSettings").findOne({
+                guildId: ctx.guildId
+            }) || {};
+        await message.deleteReactions();
+        await message.react("❌");
+        let msg: Message;
+        if(!document[setting.field]) {
+            msg = await message.edit(SuccessEmbed(`${setting.emoji} ${setting.name}`, `${setting.name} is disabled. To enable it, ${setting.enable}`, undefined, "To exit without saving, click the ❌ button below."));
+        } else {
+            if(setting.type == "role") {
+                const role = ctx.guild?.roles.find(r => r.id == document[setting.field]);
+                if(!role) {
+                    msg = await message.edit(SuccessEmbed(`${setting.emoji} ${setting.name}`, `${setting.name} is disabled as its role was deleted. To change it, ${setting.enable}`, undefined, "To exit without saving, click the ❌ button below."));
+                } else {
+                    msg = await message.edit(SuccessEmbed(`${setting.emoji} ${setting.name}`, `${setting.name} is enabled with role \`${role.name}\`. To disable it, type \`off\`. To change it, ${setting.enable}`, undefined, "To exit without saving, click the ❌ button below."));
+                }
+            } else if (setting.type == "channel") {
+                const channel = ctx.guild?.channels.find(c => c.id == document[setting.field]);
+                if(!channel) {
+                    msg = await message.edit(SuccessEmbed(`${setting.emoji} ${setting.name}`, `${setting.name} is disabled as its channel was deleted. To disable it, type \`off\`. To change it, ${setting.enable}`, undefined, "To exit without saving, click the ❌ button below."));
+                } else {
+                    msg = await message.edit(SuccessEmbed(`${setting.emoji} ${setting.name}`, `${setting.name} is enabled with role \`${channel.name}\`. To disable it, type \`off\`. To change it, ${setting.enable}`, undefined, "To exit without saving, click the ❌ button below."));
+                }
+            }
+        }
+        arx = await AwaitReaction(ctx, e => e?.messageId == msg.id && e.reaction.emoji.toString() == "❌");
+        am = await AwaitMessage(ctx, () => true);
+        arx.promise.then(() => {
+            msg.edit(SuccessEmbed("Exited config.", "No changes were made."));
+            msg.deleteReactions();
+            am.cancel();
+        }).catch(() => {
+            return;
+        });
+        am.promise.then(m => {
+            const content = m.content;
+            m.delete();
+            msg.deleteReactions();
+            const set: Record<string, unknown> = {};
+            set[setting.field] = "";
+            if(m.content.trim() == "off") {
+                set[setting.field] = "";
+            } else {
+                if(setting.type == "role") {
+                    const role = ctx.guild?.roles.find(r => r.name == content);
+                    if(!role) { 
+                        msg.edit(SuccessEmbed("Role not found.", "No changes were made."));
+                        arx.cancel();
+                        return;
+                    }
+                    set[setting.field] = role?.id;
+                } else if(setting.type == "channel") {
+                    const channel = ctx.guild?.channels.find(c => c.name == content);
+                    if(!channel) {
+                        msg.edit(SuccessEmbed("Channel not found.", "No changes were made.\nMake sure you are entering the channel name, not the mention."));
+                        arx.cancel();
+                        return;
+                    }
+                    set[setting.field] = channel?.id;
+                }
+            }
+            ctx.commandClient.db.collection("guildSettings").updateOne({
+                guildId: ctx.guildId
+            }, {
+                $set: set
+            }, {upsert: true});
+            msg.edit(SuccessEmbed("✅ Changes saved."));
+            arx.cancel();
+        }).catch(() => {
+            return;
+        });
+    }).catch(e => {
+        message.deleteReactions();
+        if(e == "No reaction was given in time.") {
             message.edit(SuccessEmbed("Config was closed due to inactivity.", "No changes were made."));
         }
+        arx.cancel();
+        am.cancel();
     });
 };
 
