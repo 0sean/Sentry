@@ -4,7 +4,7 @@ enum EmbedColors {
     error = 0xff0000,
     inprogress = 0xff6d00,
     success = 0x00ff00,
-    info = 0x0000ff
+    info = 0x008aff
 }
 
 export function Embed(embedData: {type: "none" | "error" | "inprogress" | "success" | "info", title: string, description?: string, fields?: {name: string, value: string}[], footer?: string, url?: string}) {
