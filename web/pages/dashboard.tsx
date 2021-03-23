@@ -1,6 +1,6 @@
 import Head from "../components/Head";
 import DashboardNavbar from "../components/DashboardNavbar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BiSelectMultiple } from "react-icons/bi";
 import { GetServerSideProps } from "next";
 import { Request } from "express-serve-static-core";
