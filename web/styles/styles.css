@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    @font-face {
+        font-family: "Noisy Walk";
+        src: url("/NoisyWalk.ttf");
+    }
+
+    @font-face {
+        font-family: "Poppins";
+        font-weight: 400;
+        src: url("/Poppins-Regular.ttf");
+    }
+
+    @font-face {
+        font-family: "Poppins";
+        font-weight: 500;
+        src: url("/Poppins-Medium.ttf");
+    }
+
+    @font-face {
+        font-family: "Poppins";
+        font-weight: 600;
+        src: url("/Poppins-SemiBold.ttf");
+    }
+
+    [type="checkbox"] {
+        color: #FF474A;
+    }
+}

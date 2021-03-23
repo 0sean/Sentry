@@ -1,23 +1,20 @@
-import { CommandClient } from "detritus-client";
-import { CommandOptions, Context } from "detritus-client/lib/command";
-import { CommandBase } from "../CommandBase";
+import { CommandoClient, CommandoMessage } from "discord.js-commando";
+import { Command } from "../Command";
 import { Embed } from "../Embeds";
 
-export default class Command extends CommandBase {
-    constructor(commandClient: CommandClient, options: CommandOptions) {
-        super(commandClient, options);
-        this.name = "ping";
-    }
-    metadata = {
-        description: "Checks the bot's ping to Discord."
+export class InfoCommand extends Command {
+    constructor(client: CommandoClient) {
+        super(client, {
+            name: "ping",
+            description: "Checks the bot's ping to Discord."
+        });
     }
 
-    async execute(ctx: Context) {
-        const ping = await ctx.client.ping();
-        ctx.reply(Embed({
+    run(msg: CommandoMessage): null {
+        msg.embed(Embed({
             type: "info",
-            title: `🏓 Pong! Ping: ${ping.rest}ms`,
-            description: `Gateway ping: ${ping.gateway}ms`
+            title: `🏓 Pong! Ping: \`${this.client.ws.ping}ms\``
         }));
+        return null;
     }
 }

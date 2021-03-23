@@ -1,4 +1,4 @@
-import { Embed as DetritusEmbed } from "detritus-client/lib/utils";
+import { MessageEmbed } from "discord.js";
 
 enum EmbedColors {
     error = 0xff0000,
@@ -7,8 +7,8 @@ enum EmbedColors {
     info = 0x008aff
 }
 
-export function Embed(embedData: {type: "none" | "error" | "inprogress" | "success" | "info", title: string, description?: string, fields?: {name: string, value: string}[], footer?: string, url?: string}) {
-    const e = new DetritusEmbed();
+export function Embed(embedData: {type: "none" | "error" | "inprogress" | "success" | "info", title: string, description?: string, fields?: {name: string, value: string}[], footer?: string, url?: string}): MessageEmbed {
+    const e = new MessageEmbed();
     if(embedData.type != "none") {
         e.setColor(EmbedColors[embedData.type]);
     }
@@ -24,6 +24,6 @@ export function Embed(embedData: {type: "none" | "error" | "inprogress" | "succe
         }
     }
     e.setFooter(embedData.footer || "");
-    e.setUrl(embedData.url || "");
-    return {embed: e};
+    e.setURL(embedData.url || "");
+    return e;
 }
