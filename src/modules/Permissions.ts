@@ -13,8 +13,12 @@ class PermissionGroup {
 }
 
 export const MemberGroup = new PermissionGroup("Member", 0, () => true);
-export const ModeratorGroup = new PermissionGroup("Moderator", 1, () => false); // Implement role checking for this group
-export const AdminGroup = new PermissionGroup("Admin", 2, () => false); // Implement role checking for this group
+export const ModeratorGroup = new PermissionGroup("Moderator", 1, (userID, guildID) => {
+    return DiscordClient?.guilds.cache.get(guildID || "")?.members.cache.get(userID || "")?.roles.cache.has(DiscordClient.provider.get(guildID || "", "moderatorRoleID")) || false;
+});
+export const AdminGroup = new PermissionGroup("Admin", 2, (userID, guildID) => {
+    return DiscordClient?.guilds.cache.get(guildID || "")?.members.cache.get(userID || "")?.roles.cache.has(DiscordClient.provider.get(guildID || "", "adminRoleID")) || false;
+});
 export const GuildOwnerGroup = new PermissionGroup("Server Owner", 3, (userID, guildID) => {
     return DiscordClient?.guilds.cache.get(guildID || "")?.ownerID == userID;
 });

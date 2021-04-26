@@ -2,7 +2,7 @@ import { CommandoClient, CommandoMessage } from "discord.js-commando";
 import { Command } from "../Command";
 import { Embed } from "../Embeds";
 
-export class InfoCommand extends Command {
+export class PingCommand extends Command {
     constructor(client: CommandoClient) {
         super(client, {
             name: "ping",

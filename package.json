@@ -39,6 +39,7 @@
     "autoprefixer": "^10.2.5",
     "axios": "^0.21.1",
     "commando-provider-mongo": "^2.1.0",
+    "crypto-random-string": "^3.3.1",
     "del-cli": "^3.0.1",
     "discord.js": "^12.5.1",
     "discord.js-commando": "^0.12.2",
